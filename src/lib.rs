@@ -1,7 +1,5 @@
 #![allow(unused_features)]
-#![feature(test)]
 #[cfg(test)] extern crate rand;
-#[cfg(test)] extern crate test;
 
 // http://graphics.stanford.edu/~seander/bithacks.html#InterleaveBMN
 #[inline]
@@ -74,8 +72,6 @@ mod tests {
     use super::*;
     use rand::Rng;
     use rand::thread_rng;
-
-    use test::Bencher;
 
     fn idx_tile(x: usize, y: usize, stride: usize) -> usize { stride * y + x }
     fn idx_tile_tuple(xy: (u16,u16), stride: usize) -> usize { let (x,y) = xy; stride * y as usize + x as usize }
@@ -160,138 +156,5 @@ mod tests {
             let morton = interleave_morton(x,y);
             assert!(morton == z);
         }
-    }
-
-    // benchmarks
-    #[bench]
-    fn bench_interleave_1000(b: &mut Bencher) {
-        let x = thread_rng().gen::<u16>();
-        let y = thread_rng().gen::<u16>();
-        b.iter(|| for _ in 0..1000 { test::black_box(interleave_morton(x, y)); });
-    }
-    #[bench]
-    fn bench_deinterleave_1000(b: &mut Bencher) {
-        let morton = thread_rng().gen::<u32>();
-        b.iter(|| for _ in 0..1000 { test::black_box(deinterleave_morton(morton)); });
-    }
-    #[bench]
-    fn bench_interleave_deinterleave_1000(b: &mut Bencher) {
-        let x = thread_rng().gen::<u16>();
-        let y = thread_rng().gen::<u16>();
-        b.iter(|| for _ in 0..1000 { test::black_box(deinterleave_morton(interleave_morton(x, y))); });
-    }
-    #[bench]
-    fn bench_deinterleave_interleave_1000(b: &mut Bencher) {
-        let morton = thread_rng().gen::<u32>();
-        b.iter(|| for _ in 0..1000 {
-            let (x,y) = deinterleave_morton(morton);
-            test::black_box(interleave_morton(x,y));
-        });
-    }
-    #[bench]
-    fn bench_horizontal_access_normal(b: &mut Bencher) {
-        let mut tile_normal = vec![0;2048*2048]; // 16MB allocate more then largest cache
-        // fill tiles with some random numbers
-        for y in 0..2048 {
-            for x in 0..2048 {
-                let random = thread_rng().gen::<u32>();
-                tile_normal[idx_tile(x, y, 2048)] = random;
-            }
-        }
-        // bench horizontal access (x direction)
-        b.iter(|| {
-            for y in 0..2048 {
-                for x in 0..2048 {
-                    test::black_box(tile_normal[idx_tile(x, y, 2048)]);
-                }
-            }
-        });
-    }
-    #[bench]
-    fn bench_vertical_access_normal(b: &mut Bencher) {
-        let mut tile_normal = vec![0;2048*2048]; // 16MB allocate more then largest cache
-        // fill tiles with some random numbers
-        for x in 0..2048 {
-            for y in 0..2048 {
-                let random = thread_rng().gen::<u32>();
-                tile_normal[idx_tile(x, y, 2048)] = random;
-            }
-        }
-        // bench vertical access (y direction)
-        b.iter(|| {
-            for x in 0..2048 {
-                for y in 0..2048 {
-                    test::black_box(tile_normal[idx_tile(x, y, 2048) as usize]);
-                }
-            }
-        });
-    }
-    #[bench]
-    fn bench_morton_access_normal(b: &mut Bencher) {
-        let mut tile_morton = vec![0;2048*2048]; // 16MB allocate more then largest cache
-        // fill tiles with some random numbers
-        for z in 0..2048*2048 {
-            let random = thread_rng().gen::<u32>();
-            tile_morton[idx_tile_tuple(deinterleave_morton(z), 2048) as usize] = random;
-        }
-        // bench horizontal access (x direction)
-        b.iter(|| {
-            for z in 0..2048*2048 {
-                test::black_box(tile_morton[idx_tile_tuple(deinterleave_morton(z), 2048) as usize]);
-            }
-        });
-    }
-    #[bench]
-    fn bench_horizontal_access_morton(b: &mut Bencher) {
-        let mut tile_morton = vec![0;2048*2048]; // 16MB allocate more then largest cache
-        // fill tiles with some random numbers
-        for y in 0..2048 {
-            for x in 0..2048 {
-                let random = thread_rng().gen::<u32>();
-                tile_morton[interleave_morton(x, y) as usize] = random;
-            }
-        }
-        // bench horizontal access (x direction)
-        b.iter(|| {
-            for y in 0..2048 {
-                for x in 0..2048 {
-                    test::black_box(tile_morton[interleave_morton(x,y) as usize]);
-                }
-            }
-        });
-    }
-    #[bench]
-    fn bench_vertical_access_morton(b: &mut Bencher) {
-        let mut tile_morton = vec![0;2048*2048]; // 16MB allocate more then largest cache
-        // fill tiles with some random numbers
-        for x in 0..2048 {
-            for y in 0..2048 {
-                let random = thread_rng().gen::<u32>();
-                tile_morton[interleave_morton(x, y) as usize] = random;
-            }
-        }
-        // bench vertical access (y direction)
-        b.iter(|| {
-            for x in 0..2048 {
-                for y in 0..2048 {
-                    test::black_box(tile_morton[interleave_morton(x,y) as usize]);
-                }
-            }
-        });
-    }
-    #[bench]
-    fn bench_morton_access_morton(b: &mut Bencher) {
-        let mut tile_morton = vec![0;2048*2048]; // 16MB allocate more then largest cache
-        // fill tiles with some random numbers
-        for z in 0..2048*2048 {
-            let random = thread_rng().gen::<u32>();
-            tile_morton[z] = random;
-        }
-        // bench horizontal access (x direction)
-        b.iter(|| {
-            for z in 0..2048*2048 {
-                test::black_box(tile_morton[z]);
-            }
-        });
     }
 }

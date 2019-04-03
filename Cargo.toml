@@ -2,6 +2,7 @@
 name = "morton"
 version = "0.2.0"
 authors = ["Reinier Maas <reiniermaas@hotmail.com>"]
+edition = "2018"
 
 # METADATA
 description = "morton iterator for rust"
@@ -51,3 +52,8 @@ lto = true
 
 [dev-dependencies]
 rand = "0.3.15"
+criterion = "0.2"
+
+[[bench]]
+name = "benches"
+harness = false
